@@ -3,7 +3,7 @@
 #include <conio.h>
 #include <iostream>
 #include <math.h>
-#include <vector>
+#include <windows.h>
 #include <algorithm>
 #include <functional>
 #include <fstream>
@@ -18,12 +18,17 @@ struct Point
 
 };
 double F_1(double x, double y, double _r);
+
 class Penalty_func
 {
 private:
 	double _EPS, _EPS1, _r, _C;
 	Point x_0;
+	
 public:
+	int countIter = 0;
+	static int countCalc;
+	
 	static double Function(double x, double y)
 	{
 		int A1 = 1, A2 = 3;
@@ -31,13 +36,17 @@ public:
 		int b1 = 3, b2 = 1;
 		int c1 = 2, c2 = 1;
 		int d1 = 3, d2 = 2;
+		countCalc++;
 		return -((A1 / (1 + pow(((x - a1) / b1), 2) + pow(((y - c1) / d1), 2))) + (A2 / (1 + pow(((x - a2) / b2), 2) + pow(((y - c2) / d2), 2))));
 		//return pow(x, 2) + pow(y,2);
+		//return (-2 * exp(-pow((X - 1.0) / 2.0, 2) - pow(Y - 1.0, 2)) - 3 * exp(-pow((X - 2.0) / 3.0, 2) - pow((Y - 3.0) / 2.0, 2)));
 	}
 	static double Penalty_F(double x, double y, double _r)
 	{
+
+		//return (Rk / 2.0)*(max(0.0, X - Y)*max(0.0, X - Y) + max(0.0, -X)* max(0.0, -X) + max(0.0, X - 4)* max(0.0, X - 4));
 		return (_r / 2.0)*pow(max(0.0, (x + y - 1)), 2);
-		//return (_r / 2.0)*(pow(max(0.0, (1 - x)), 2) + pow(max(0.0, (x+y-2)), 2));
+		//return (_r / 2.0)*pow(max(0.0, (2*x+y-1)), 2) ;
 	}
 	double F(double x, double y, double _r)
 	{
@@ -50,8 +59,10 @@ public:
 		Point _xk=x_0;
 		do
 		{
+
 			_xk=find_min_Gauss(_xk, _EPS, _EPS1);
 			_r *= _C;
+			countIter++;
 
 		} while (Penalty_F(_xk.x, _xk.y, _r) > _EPS);
 		return _xk;
@@ -63,6 +74,7 @@ public:
 		_xk = x0;
 		do
 		{
+
 			_xk_1 = _xk;
 			GetFunction = bind(F_1, placeholders::_1, _xk.y, _r);
 			pair<double, double> interval_x = search_interval(0, DELTA);
@@ -146,12 +158,13 @@ public:
 	void Read(string path)
 	{
 		ifstream read(path, ios_base::in);
-		
+		countCalc = 0;
 		read >> x_0.x >> x_0.y >>_r >> _C >> _EPS >> _EPS1;
 		read.close();
 	}
 
 };
+int Penalty_func::countCalc = 0;
 double F_1(double x, double y, double _r)
 {
 
