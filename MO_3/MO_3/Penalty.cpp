@@ -1,6 +1,6 @@
-////#include "Penalty.h"
-#include "barrier.h"
+//#include "Penalty.h"
 #include <conio.h>
+#include "barrier.h"
 
 
 void main()
@@ -8,7 +8,7 @@ void main()
 	string path = "input.txt";
 	Point result;
 	//Penalty_func A;
-	barrier A;
+	Barrier_func A;
 	A.Read(path);
 	double k;
 	result = A.DoAlgorithm();
