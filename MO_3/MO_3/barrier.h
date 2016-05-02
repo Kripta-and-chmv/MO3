@@ -8,6 +8,7 @@
 #include <functional>
 #include <fstream>
 #include <iomanip>  
+#include<vector>
 using namespace std;
 struct Point
 {
@@ -41,8 +42,8 @@ public:
 	}
 	static double Penalty_F(double x, double y, double _r)
 	{
-		//return (_r / (x + y - 1));
-		return (_r*log(x +y - 1));
+		return (x + y - 1 <= 0) ? (-_r / (x + y - 1)) : DBL_MAX;
+		//return (_r*log(x +y - 1));
 	}
 	double F(double x, double y, double _r)
 	{
@@ -55,10 +56,11 @@ public:
 		Point _xk = x_0;
 		do
 		{
+			
 			_xk = find_min_Gauss(_xk, _EPS, _EPS1);
 			_r /= _C;
 			countIter++;
-		} while (abs(Penalty_F(_xk.x, _xk.y, _r) )> _EPS );
+		} while (abs(Penalty_F(_xk.x, _xk.y, _r)) > _EPS);
 		return _xk;
 	}
 	Point find_min_Gauss(Point x0, double EPS, double EPS1)
@@ -68,29 +70,22 @@ public:
 		_xk = x0;
 		do
 		{
-				_xk_1 = _xk;
-				GetFunction = bind(F_1, placeholders::_1, _xk.y, _r);
-				pair<double, double> interval_x = search_interval(_xk.y);
-				if (interval_x.first + _xk.y > 1)
-					interval_x.first = 1 - _xk.y;
-				if (interval_x.second + _xk.y > 1)
-					interval_x.second = 1 - _xk.y;
-				_xk.x = Dihotomy(interval_x, EPS);
-				GetFunction = bind(F_1, _xk.x, placeholders::_1, _r);
-				pair<double, double> interval_y = search_interval(_xk.x);
-				if (interval_y.first + _xk.x > 1)
-					interval_y.first = 1 - _xk.x;
-				if (interval_y.second + _xk.x > 1)
-					interval_y.second = 1 - _xk.x;
-				_xk.y = Dihotomy(interval_y, EPS);
-			
+			_xk_1 = _xk;
+		
+			GetFunction = bind(F_1, _xk.x, placeholders::_1, _r);
+			pair<double, double> interval_y = search_interval(_xk.y);
+			_xk.y = Fibbonachi(interval_y, EPS);
+
+			GetFunction = bind(F_1, placeholders::_1, _xk.y, _r);
+			pair<double, double> interval_x = search_interval(_xk.x);
+			_xk.x = Fibbonachi(interval_x, EPS);
 		} while (abs(_xk.x - _xk_1.x) > EPS1 || abs(_xk.y - _xk_1.y) > EPS1
 			&& abs(F(_xk.x, _xk.y, _r) - F(_xk_1.x, _xk_1.y, _r)) > EPS);
 		return _xk;
 	}
 	function<double(double)>GetFunction;
 	pair<double, double> search_interval(double x0)
-	{
+	{	
 		pair<double, double> res;
 		double DELTA = 0.5;
 		double h, x1, x2;
@@ -103,27 +98,24 @@ public:
 			h = DELTA;
 		}
 		else
-		if (f1 > f3)
-		{
-			h = -DELTA;
-		}
-		else
-		{
-			res.first = x0 - DELTA;
-			res.second = x0 + DELTA;
-			return res;
-		}
+			if (f1 > f3)
+			{
+				h = -DELTA;
+			}
+			else
+			{
+				res.first = x0 - DELTA;
+				res.second = x0 + DELTA;
+				return res;
+			}
 		x2 = x1 + h;
-
-
-
 		while (GetFunction(x1) > GetFunction(x2))
 		{
 			h *= 2;
 			x0 = x1;
 			x1 = x2;
 			x2 = x1 + h;
-		} 
+		}
 		if (x0 > x2)
 		{
 			res.first = x2;
@@ -138,35 +130,59 @@ public:
 	}
 
 
-	double Dihotomy(pair<double, double> interval, double EPS)
+	double Fibbonachi(pair<double, double> interval, double EPS)
 	{
-		double x1, x2;
-		double DELTA = EPS / 2.0;
-		double a = interval.first, b = interval.second;
-		int iter = 0;
-		while (abs(b - a) > EPS)
+		pair<double, double> s = interval;
+		double f1, f2;
+		double fib_max = (s.second - s.first) / EPS;
+		long long int add_fib = 0;
+		vector<long long int> fibs;
+		fibs.push_back(1);
+		fibs.push_back(1);
+		int n = 2;
+		while (fib_max > add_fib)
 		{
+			add_fib = fibs[n - 1] + fibs[n - 2];
+			fibs.push_back(add_fib); 
+			n++;
+		}
+		n = fibs.size() - 3;
 
-			x1 = (a + b - DELTA) / 2;
-			x2 = (a + b + DELTA) / 2;
-			if (GetFunction(x1) < GetFunction(x2))
+		double x1 = s.first + ((float)fibs[n] / (float)fibs[n + 2]) * (s.second - s.first);
+		double x2 = s.first + s.second - x1;
+		f1 = GetFunction(x1);
+		f2 = GetFunction(x2);
+
+		for (int k = 1; k < n; k++)
+		{
+			if (f1 < f2)
 			{
-				b = x2;
+				s.second = x2;
+				x2 = x1;
+				f2 = f1;
+				x1 = s.first + ((float)fibs[n - k+1] / (float)fibs[n - k + 3]) * (s.second - s.first);
+				f1 = GetFunction(x1);
 			}
 			else
 			{
-				a = x1;
+				s.first = x1;
+				x1 = x2;
+				f1 = f2;
+				x2 = s.first + ((float)fibs[n - k + 2] / (float)fibs[n - k + 3])*(s.second - s.first);
+				f2 = GetFunction(x2);
 			}
-			iter++;
 		}
-		return (a + b) / 2.0;
+		return (s.first + s.second) / 2;
 	}
+
 	void Read(string path)
 	{
 		ifstream read(path, ios_base::in);
 		countCalc = 0;
 		read >> x_0.x >> x_0.y >> _r >> _C >> _EPS >> _EPS1;
 		read.close();
+
+
 	}
 
 };
