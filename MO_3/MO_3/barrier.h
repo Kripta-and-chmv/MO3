@@ -1,14 +1,14 @@
 
 #include <stdio.h>
-#include <conio.h>
+
 #include <iostream>
 #include <math.h>
-#include <windows.h>
-#include <algorithm>
+
 #include <functional>
 #include <fstream>
-#include <iomanip>  
+
 #include<vector>
+
 using namespace std;
 struct Point
 {
@@ -18,8 +18,8 @@ struct Point
 	Point() {};
 
 };
-double F_1(double x, double y, double _r);
-
+double F_2(double x, double y, double _r);
+int countCalc =0;
 class Barrier_func
 {
 private:
@@ -28,8 +28,6 @@ private:
 
 public:
 	int countIter = 0;
-	static int countCalc;
-
 	static double Function(double x, double y)
 	{
 		int A1 = 1, A2 = 3;
@@ -37,13 +35,15 @@ public:
 		int b1 = 3, b2 = 1;
 		int c1 = 2, c2 = 1;
 		int d1 = 3, d2 = 2;
-		countCalc++;
+
 		return -((A1 / (1 + pow(((x - a1) / b1), 2) + pow(((y - c1) / d1), 2))) + (A2 / (1 + pow(((x - a2) / b2), 2) + pow(((y - c2) / d2), 2))));
+		//return pow(x, 2) + pow(y, 2);
 	}
 	static double Penalty_F(double x, double y, double _r)
 	{
+		//return (1 - x - y <= 0) ? (-_r / (1 - x - y)) : DBL_MAX;
 		return (x + y - 1 <= 0) ? (-_r / (x + y - 1)) : DBL_MAX;
-		//return (_r*log(x +y - 1));
+		//return (x + y - 1 <= 0) ? (-_r*log(-(x + y - 1))) : DBL_MAX;
 	}
 	double F(double x, double y, double _r)
 	{
@@ -55,10 +55,10 @@ public:
 	{
 		Point _xk = x_0;
 		do
-		{
-			
+		{		
 			_xk = find_min_Gauss(_xk, _EPS, _EPS1);
 			_r /= _C;
+			//_r = pow(_r, 5)/2;
 			countIter++;
 		} while (abs(Penalty_F(_xk.x, _xk.y, _r)) > _EPS);
 		return _xk;
@@ -72,11 +72,11 @@ public:
 		{
 			_xk_1 = _xk;
 		
-			GetFunction = bind(F_1, _xk.x, placeholders::_1, _r);
+			GetFunction = bind(F_2, _xk.x, placeholders::_1, _r);
 			pair<double, double> interval_y = search_interval(_xk.y);
 			_xk.y = Fibbonachi(interval_y, EPS);
 
-			GetFunction = bind(F_1, placeholders::_1, _xk.y, _r);
+			GetFunction = bind(F_2, placeholders::_1, _xk.y, _r);
 			pair<double, double> interval_x = search_interval(_xk.x);
 			_xk.x = Fibbonachi(interval_x, EPS);
 		} while (abs(_xk.x - _xk_1.x) > EPS1 || abs(_xk.y - _xk_1.y) > EPS1
@@ -178,7 +178,7 @@ public:
 	void Read(string path)
 	{
 		ifstream read(path, ios_base::in);
-		countCalc = 0;
+		
 		read >> x_0.x >> x_0.y >> _r >> _C >> _EPS >> _EPS1;
 		read.close();
 
@@ -186,8 +186,8 @@ public:
 	}
 
 };
-int Barrier_func::countCalc = 0;
-double F_1(double x, double y, double _r)
+
+double F_2(double x, double y, double _r)
 {
 
 	double f_x = Barrier_func::Function(x, y),

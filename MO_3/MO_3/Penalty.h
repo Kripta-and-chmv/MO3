@@ -1,21 +1,18 @@
 
 #include <stdio.h>
-#include <conio.h>
 #include <iostream>
 #include <math.h>
 #include <windows.h>
-#include <algorithm>
 #include <functional>
 #include <fstream>
-#include <iomanip>  
 #include <vector>
 using namespace std;
-struct Point
+struct PointP
 {
 	double x;
 	double y;
-	Point(double x, double y) : x(x), y(y) {};
-	Point() {};
+	PointP(double x, double y) : x(x), y(y) {};
+	PointP() {};
 
 };
 double F_1(double x, double y, double _r);
@@ -24,11 +21,10 @@ class Penalty_func
 {
 private:
 	double _EPS, _EPS1, _r, _C;
-	Point x_0;
+	PointP x_0;
 
 public:
 	int countIter = 0;
-	static int countCalc;
 
 	static double Function(double x, double y)
 	{
@@ -37,12 +33,13 @@ public:
 		int b1 = 3, b2 = 1;
 		int c1 = 2, c2 = 1;
 		int d1 = 3, d2 = 2;
-		countCalc++;
 		return -((A1 / (1 + pow(((x - a1) / b1), 2) + pow(((y - c1) / d1), 2))) + (A2 / (1 + pow(((x - a2) / b2), 2) + pow(((y - c2) / d2), 2))));
+		//return pow(x, 2) + pow(y, 2);
 	}
 	static double Penalty_F(double x, double y, double _r)
 	{
-		return (_r /2)*pow(max(0, (x + y - 1)),2);
+		return (_r / 2)*pow(max(0, (x + y - 1)), 2);
+		//return (_r / 2)*pow(max(0, ( 1 - x - y)), 2);
 	}
 	double F(double x, double y, double _r)
 	{
@@ -50,9 +47,9 @@ public:
 			p_x = Penalty_F(x, y, _r);
 		return f_x + p_x;
 	}
-	Point DoAlgorithm()
+	PointP DoAlgorithm()
 	{
-		Point _xk = x_0;
+		PointP _xk = x_0;
 		do
 		{
 			_xk = find_min_Gauss(_xk, _EPS, _EPS1);
@@ -61,9 +58,9 @@ public:
 		} while (Penalty_F(_xk.x, _xk.y, _r) > _EPS);
 		return _xk;
 	}
-	Point find_min_Gauss(Point x0, double EPS, double EPS1)
+	PointP find_min_Gauss(PointP x0, double EPS, double EPS1)
 	{
-		Point _xk, _xk_1;
+		PointP _xk, _xk_1;
 		double DELTA = 0.5;
 		_xk = x0;
 		do
@@ -94,26 +91,23 @@ public:
 			h = DELTA;
 		}
 		else
-			if (f1 > f3)
-			{
-				h = -DELTA;
-			}
-			else
-			{
-				res.first = x0 - DELTA;
-				res.second = x0 + DELTA;
-				return res;
-			}
-			x2 = x1 + h;
-
-		
-
+		if (f1 > f3)
+		{
+			h = -DELTA;
+		}
+		else
+		{
+			res.first = x0 - DELTA;
+			res.second = x0 + DELTA;
+			return res;
+		}
+		x2 = x1 + h;
 		while (GetFunction(x1) > GetFunction(x2))
 		{
 			h *= 2;
 			x0 = x1;
 			x1 = x2;
-		x2 = x1 + h;
+			x2 = x1 + h;
 		}
 		if (x0 > x2)
 		{
@@ -176,13 +170,12 @@ public:
 	void Read(string path)
 	{
 		ifstream read(path, ios_base::in);
-		countCalc = 0;
 		read >> x_0.x >> x_0.y >> _r >> _C >> _EPS >> _EPS1;
 		read.close();
 	}
 
 };
-int Penalty_func::countCalc = 0;
+
 double F_1(double x, double y, double _r)
 {
 
